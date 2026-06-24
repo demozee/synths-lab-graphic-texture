@@ -1,6 +1,6 @@
 # Synths Lab Graphic Texture
 
-Version: `V1.1`
+Version: `V1.2`
 
 A browser-based graphic texture generator for turning images, video frames, and SVG assets into print-inspired visual styles such as thermal-map compositions, halftone graphics, pen-trace outlines, rough ink, distressed grain, and fabric-like texture.
 
@@ -24,12 +24,21 @@ http://localhost:4178/tools/graphic-texture-demo.html
 ├── package.json
 ├── assets/
 │   ├── TE20L.woff2
-│   └── synths-logo.svg
+│   ├── download-icon.svg
+│   └── logo-svg.svg
 └── tools/
     └── graphic-texture-demo.html
 ```
 
 ## Version Notes
+
+### V1.2
+
+- Refines the three-column interface and responsive preview sizing.
+- Adds unified image, SVG, and PDF input.
+- Updates typography, branding, color controls, and preset-chain layout.
+- Keeps the random action with presets and fixes PNG export to the right sidebar footer.
+- Improves mask extraction, rough edges, color rendering, and decorative effect controls.
 
 ### V1.1
 
