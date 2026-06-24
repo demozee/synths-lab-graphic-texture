@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Synths Lab Graphic Texture V1.2</title>
+    <title>Synths Lab Graphic Texture V1.3</title>
     <style>
       @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&display=swap");
 
@@ -285,8 +285,8 @@
         margin-top: 10px;
         border: 1px solid #34343a;
         border-radius: 0;
-        background: var(--orange);
-        color: #08080a;
+        background: #0071bb;
+        color: #ffffff;
         cursor: pointer;
         font-family: var(--font-cn);
         font-size: 18px;
@@ -345,6 +345,10 @@
         text-align: center;
       }
 
+      .mobile-export {
+        display: none;
+      }
+
       .main {
         position: relative;
         display: grid;
@@ -398,9 +402,11 @@
 
       .result {
         display: block;
-        width: min(calc(100% - 12px), calc(100vh - 310px));
-        max-width: 860px;
-        aspect-ratio: 1 / 1;
+        width: auto;
+        height: auto;
+        max-width: min(calc(100% - 12px), 860px);
+        max-height: calc(100% - 44px);
+        object-fit: contain;
         background: #f6f6f2;
       }
 
@@ -442,6 +448,7 @@
         width: 100%;
         height: 100%;
         min-height: 0;
+        object-fit: contain;
       }
 
       .node-list {
@@ -753,12 +760,169 @@
       }
 
       @media (max-width: 860px) {
+        html,
+        body {
+          height: auto;
+          min-height: 100%;
+        }
+
+        body {
+          overflow-x: hidden;
+          overflow-y: auto;
+          background-size: 15px 15px;
+        }
+
         .app {
-          grid-template-columns: 1fr;
+          display: block;
+          height: auto;
+          min-height: 100vh;
+          overflow: visible;
+        }
+
+        .side {
+          width: 100%;
+          height: auto;
+          min-height: 0;
+          border-right: 0;
+        }
+
+        .brand {
+          min-height: 92px;
+          padding: 22px 20px;
+        }
+
+        .brand img {
+          width: min(230px, 72vw);
+        }
+
+        .side-scroll {
+          overflow: visible;
+        }
+
+        .panel {
+          padding: 22px 20px;
+        }
+
+        h2 {
+          margin-bottom: 14px;
+          font-size: 19px;
+        }
+
+        .drop {
+          height: 138px;
+        }
+
+        .drop-title {
+          font-size: 48px;
+        }
+
+        .drop-sub {
+          margin-top: 13px;
+          font-size: 13px;
+        }
+
+        .preview {
+          display: none;
+        }
+
+        .preset-grid {
+          gap: 7px;
+        }
+
+        .preset {
+          min-height: 58px;
+          padding: 9px 11px;
+          font-size: 16px;
+        }
+
+        .preset small {
+          font-size: 12px;
+        }
+
+        .randomize-button {
+          height: 54px;
+          margin-top: 8px;
+          font-size: 18px;
+        }
+
+        .mobile-export {
+          display: grid;
+          grid-template-columns: 34px 1fr;
+          align-items: center;
+          width: 100%;
+          height: 60px;
+          margin-top: 8px;
+          border: 0;
+          border-radius: 0;
+          background: var(--yellow);
+          color: #08080a;
+          cursor: pointer;
+        }
+
+        .mobile-export .export-icon {
+          padding-left: 3px;
+        }
+
+        .mobile-export .export-label {
+          font-size: 28px;
+        }
+
+        .main {
+          display: block;
+          width: 100%;
+          height: auto;
+          padding: 24px 20px 28px;
+          overflow: visible;
+        }
+
+        .top {
+          display: block;
+          margin-bottom: 18px;
+        }
+
+        .title {
+          font-size: 44px;
+          line-height: 0.95;
+        }
+
+        .note {
+          max-width: none;
+          margin-top: 14px;
+          font-size: 14px;
+          line-height: 1.55;
         }
 
         .workspace {
+          display: block;
           grid-template-columns: 1fr;
+          height: auto;
+        }
+
+        .stage {
+          width: 100%;
+          height: auto;
+          min-height: 0;
+          padding: 14px;
+          aspect-ratio: 1 / 1;
+        }
+
+        .result {
+          width: auto;
+          height: auto;
+          max-width: 100%;
+          max-height: 100%;
+        }
+
+        .empty {
+          max-width: 82%;
+          font-size: clamp(34px, 14vw, 62px);
+          line-height: 0.92;
+          text-align: center;
+        }
+
+        .before-after,
+        .right {
+          display: none;
         }
       }
     </style>
@@ -786,6 +950,10 @@
             <h2>预设链</h2>
             <div class="preset-grid" id="presetGrid"></div>
             <button class="randomize-button" id="randomize">随机</button>
+            <button class="mobile-export" data-export-png>
+              <span class="export-icon"><img src="../assets/download-icon.svg" alt="" /></span>
+              <span class="export-label">PNG</span>
+            </button>
           </section>
         </div>
       </aside>
@@ -828,7 +996,7 @@
           </section>
         </div>
         <div class="export-dock">
-          <button class="export-button" id="exportPng">
+          <button class="export-button" id="exportPng" data-export-png>
             <span class="export-icon"><img src="../assets/download-icon.svg" alt="" /></span>
             <span class="export-label">PNG</span>
           </button>
@@ -927,6 +1095,7 @@
         source: null,
         sourceType: "empty",
         sourceAspect: 1,
+        sourceHasTransparency: false,
         size: 1000,
         nodes: clone(presets.thermalMap.nodes),
       };
@@ -1051,13 +1220,47 @@
       }
 
       function drawContain(ctx, media, aspect, w, h, fill = "#fff") {
-        ctx.fillStyle = fill;
-        ctx.fillRect(0, 0, w, h);
+        if (fill) {
+          ctx.fillStyle = fill;
+          ctx.fillRect(0, 0, w, h);
+        }
         let dw = w;
         let dh = h;
         if (w / h > aspect) dw = h * aspect;
         else dh = w / aspect;
         ctx.drawImage(media, (w - dw) / 2, (h - dh) / 2, dw, dh);
+      }
+
+      function drawTransparencyGrid(ctx, w, h) {
+        const cell = 16;
+        ctx.fillStyle = "#d9d9d9";
+        ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = "#eeeeee";
+        for (let y = 0; y < h; y += cell) {
+          for (let x = 0; x < w; x += cell) {
+            if ((x / cell + y / cell) % 2 === 0) ctx.fillRect(x, y, cell, cell);
+          }
+        }
+      }
+
+      function sourceHasTransparency(media, aspect) {
+        const maxSide = 96;
+        const canvas = document.createElement("canvas");
+        if (aspect >= 1) {
+          canvas.width = maxSide;
+          canvas.height = Math.max(1, Math.round(maxSide / aspect));
+        } else {
+          canvas.height = maxSide;
+          canvas.width = Math.max(1, Math.round(maxSide * aspect));
+        }
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(media, 0, 0, canvas.width, canvas.height);
+        const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+        for (let i = 3; i < pixels.length; i += 4) {
+          if (pixels[i] < 250) return true;
+        }
+        return false;
       }
 
       function getLuma(data, index) {
@@ -1446,14 +1649,28 @@
       }
 
       function buildSourceImage() {
-        const size = state.size;
-        work.width = size;
-        work.height = size;
-        workCtx.clearRect(0, 0, size, size);
-        drawContain(workCtx, state.source, state.sourceAspect, size, size, "#ffffff");
-        sourceMiniCtx.clearRect(0, 0, 320, 320);
-        drawContain(sourceMiniCtx, state.source, state.sourceAspect, 320, 320, "#ffffff");
-        return workCtx.getImageData(0, 0, size, size);
+        const maxSide = state.size;
+        const aspect = Math.max(0.01, state.sourceAspect || 1);
+        const width = aspect >= 1 ? maxSide : Math.max(1, Math.round(maxSide * aspect));
+        const height = aspect >= 1 ? Math.max(1, Math.round(maxSide / aspect)) : maxSide;
+        work.width = width;
+        work.height = height;
+        workCtx.clearRect(0, 0, width, height);
+        drawContain(workCtx, state.source, aspect, width, height, state.sourceHasTransparency ? null : "#ffffff");
+
+        const miniMax = 320;
+        const miniWidth = aspect >= 1 ? miniMax : Math.max(1, Math.round(miniMax * aspect));
+        const miniHeight = aspect >= 1 ? Math.max(1, Math.round(miniMax / aspect)) : miniMax;
+        sourceMini.width = miniWidth;
+        sourceMini.height = miniHeight;
+        sourceMiniCtx.clearRect(0, 0, miniWidth, miniHeight);
+        if (state.sourceHasTransparency) {
+          drawTransparencyGrid(sourceMiniCtx, miniWidth, miniHeight);
+          drawContain(sourceMiniCtx, state.source, aspect, miniWidth, miniHeight, null);
+        } else {
+          drawContain(sourceMiniCtx, state.source, aspect, miniWidth, miniHeight, "#ffffff");
+        }
+        return workCtx.getImageData(0, 0, width, height);
       }
 
       function createMask(source) {
@@ -1467,6 +1684,11 @@
         for (let y = 0; y < h; y++) {
           for (let x = 0; x < w; x++) {
             const i = (y * w + x) * 4;
+            const alpha = data[i + 3] / 255;
+            if (state.sourceHasTransparency) {
+              mask[y * w + x] = alpha;
+              continue;
+            }
             let luma = clamp((getLuma(data, i) - 128) * contrast + 128);
             if (extract.invert) luma = 255 - luma;
             const noisy = luma + (hash(Math.floor(x / 3), Math.floor(y / 3), 2) - 0.5) * 22;
@@ -1567,15 +1789,21 @@
       }
 
       function renderMaskMini(mask, w, h) {
-        const image = maskMiniCtx.createImageData(320, 320);
+        const aspect = w / Math.max(1, h);
+        const miniMax = 320;
+        const miniWidth = aspect >= 1 ? miniMax : Math.max(1, Math.round(miniMax * aspect));
+        const miniHeight = aspect >= 1 ? Math.max(1, Math.round(miniMax / aspect)) : miniMax;
+        maskMini.width = miniWidth;
+        maskMini.height = miniHeight;
+        const image = maskMiniCtx.createImageData(miniWidth, miniHeight);
         const d = image.data;
-        for (let y = 0; y < 320; y++) {
-          for (let x = 0; x < 320; x++) {
-            const sx = Math.floor((x / 320) * w);
-            const sy = Math.floor((y / 320) * h);
+        for (let y = 0; y < miniHeight; y++) {
+          for (let x = 0; x < miniWidth; x++) {
+            const sx = Math.min(w - 1, Math.floor((x / miniWidth) * w));
+            const sy = Math.min(h - 1, Math.floor((y / miniHeight) * h));
             const strength = clamp(mask[sy * w + sx], 0, 1);
             const v = 242 - strength * 224;
-            const i = (y * 320 + x) * 4;
+            const i = (y * miniWidth + x) * 4;
             d[i] = v;
             d[i + 1] = v;
             d[i + 2] = v;
@@ -2120,11 +2348,12 @@
         state.source = source;
         state.sourceType = type;
         state.sourceAspect = aspect || 1;
+        state.sourceHasTransparency = type !== "pdf" && sourceHasTransparency(source, state.sourceAspect);
         if (previewSrc) {
           imagePreview.src = previewSrc;
           imagePreview.classList.remove("hidden");
         }
-        setInputStatus(status);
+        setInputStatus(state.sourceHasTransparency ? `${status} · 已识别透明轮廓` : status);
         renderAll();
       }
 
@@ -2174,12 +2403,16 @@
         drop.classList.remove("drag");
         loadFile(event.dataTransfer.files[0]);
       });
-      document.getElementById("exportPng").addEventListener("click", () => {
+      function exportPng() {
         if (!state.source) return;
         const a = document.createElement("a");
         a.href = result.toDataURL("image/png");
         a.download = `graphic-texture-chain-${state.preset}.png`;
         a.click();
+      }
+
+      document.querySelectorAll("[data-export-png]").forEach((button) => {
+        button.addEventListener("click", exportPng);
       });
       document.getElementById("randomize").addEventListener("click", () => {
         randomizeChain();
