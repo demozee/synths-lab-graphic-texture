@@ -1,6 +1,6 @@
 # Synths Lab Graphic Texture
 
-Version: `V1.5`
+Version: `V1.6`
 
 A browser-based graphic texture generator for turning images, video frames, and SVG assets into print-inspired visual styles such as thermal-map compositions, halftone graphics, pen-trace outlines, rough ink, distressed grain, and fabric-like texture.
 
@@ -31,6 +31,13 @@ http://localhost:4178/tools/graphic-texture-demo.html
 ```
 
 ## Version Notes
+
+### V1.6 - Paper Texture Rendering
+
+- Replaces the tiled hash-noise background with continuous procedural paper/fiber texture so the canvas no longer looks like repeated small texture patches.
+- Lowers the default background texture intensity for a cleaner print-material feel.
+- Applies the new texture model consistently across Thermal Map, Pen Trace, and the shared render path.
+- Keeps decorative paper texture out of transparent-background output so exported PNGs stay cleaner.
 
 ### V1.5 - UI 2.0 Fixes
 

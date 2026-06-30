@@ -2024,6 +2024,51 @@
         return n - Math.floor(n);
       }
 
+      function valueNoise(x, y, seed = 1) {
+        const ix = Math.floor(x);
+        const iy = Math.floor(y);
+        const fx = x - ix;
+        const fy = y - iy;
+        const ux = fx * fx * (3 - 2 * fx);
+        const uy = fy * fy * (3 - 2 * fy);
+        const a = hash(ix, iy, seed);
+        const b = hash(ix + 1, iy, seed);
+        const c = hash(ix, iy + 1, seed);
+        const d = hash(ix + 1, iy + 1, seed);
+        return lerp(lerp(a, b, ux), lerp(c, d, ux), uy);
+      }
+
+      function fractalNoise(x, y, seed = 1, octaves = 4) {
+        let total = 0;
+        let amplitude = 0.5;
+        let frequency = 1;
+        let normalizer = 0;
+        for (let i = 0; i < octaves; i++) {
+          total += valueNoise(x * frequency, y * frequency, seed + i * 19) * amplitude;
+          normalizer += amplitude;
+          amplitude *= 0.5;
+          frequency *= 2;
+        }
+        return normalizer ? total / normalizer : 0;
+      }
+
+      function paperTextureTone(x, y, texture, clipStrength = 1, seed = 1) {
+        if (!texture.enabled || clipStrength <= 0) return 0;
+        const fabric = clamp(texture.fabric || 0, 0, 100) / 100;
+        const scan = clamp(texture.scan || 0, 0, 100) / 100;
+        const cloud = fractalNoise(x * 0.006, y * 0.006, seed, 4) - 0.5;
+        const fiberX = fractalNoise(x * 0.038 + seed * 2.1, y * 0.006, seed + 41, 3) - 0.5;
+        const fiberY = fractalNoise(x * 0.006, y * 0.032 + seed * 1.7, seed + 67, 3) - 0.5;
+        const scanLine = Math.sin(y * (0.022 + scan * 0.018) + fractalNoise(0, y * 0.018, seed + 83, 2) * 2) * scan;
+        return clipStrength * (cloud * 8.5 * fabric + fiberX * 3.8 * fabric + fiberY * 2.4 * fabric + scanLine * 2.4);
+      }
+
+      function printGrainTone(x, y, amount = 1, seed = 1) {
+        const fine = hash(x, y, seed) - 0.5;
+        const soft = fractalNoise(x * 0.075, y * 0.075, seed + 11, 2) - 0.5;
+        return (fine * 18 + soft * 10) * amount;
+      }
+
       function hexToRgb(hex) {
         const clean = String(hex || "").trim().replace("#", "");
         const full = clean.length === 3 ? clean.split("").map((x) => x + x).join("") : clean.padEnd(6, "0").slice(0, 6);
@@ -2843,12 +2888,11 @@
             const luma = clamp((raw - 128) * contrast + 128);
             const textureClip = clipDecor ? clamp(textureMask[p], 0, 1) : 1;
             const textureStrength = textureActive ? textureClip : 0;
-            const paperNoise = transparent ? 0 : textureStrength * (hash(Math.floor(x / 3), Math.floor(y / 3), 81) - 0.5) * (8 + texture.fabric * 0.34);
-            const scan = transparent ? 0 : textureStrength * Math.sin(y * 0.32 + hash(1, Math.floor(y / 4), 82) * 2) * texture.scan * 0.08;
+            const paperTone = transparent ? 0 : paperTextureTone(x, y, texture, textureStrength, 81);
 
-            let r = transparent ? 0 : clamp(lerp(255, bgRgb.r, bgAlpha) + paperNoise + scan);
-            let g = transparent ? 0 : clamp(lerp(255, bgRgb.g, bgAlpha) + paperNoise + scan);
-            let b = transparent ? 0 : clamp(lerp(255, bgRgb.b, bgAlpha) + paperNoise + scan);
+            let r = transparent ? 0 : clamp(lerp(255, bgRgb.r, bgAlpha) + paperTone);
+            let g = transparent ? 0 : clamp(lerp(255, bgRgb.g, bgAlpha) + paperTone);
+            let b = transparent ? 0 : clamp(lerp(255, bgRgb.b, bgAlpha) + paperTone);
             let a = transparent ? 0 : 255;
             let line = 0;
 
@@ -2972,11 +3016,7 @@
             const textureClip = clipDecor ? clamp(textureMask[p], 0, 1) : 1;
             const textureStrength = textureActive ? textureClip : 0;
             const alphaGate = transparent ? clamp(textureMask[p], 0, 1) : 1;
-            const paperNoise = transparent ? 0 : textureStrength * (hash(Math.floor(x / 2), Math.floor(y / 2), 121) - 0.5) * (4 + textureFabric * 0.75);
-            const paperWeave = transparent ? 0 : textureStrength * (
-              Math.sin(x * 0.11 + hash(Math.floor(y / 12), 12, 124) * 2) +
-              Math.sin(y * 0.18 + hash(Math.floor(x / 12), 13, 125) * 2)
-            ) * textureFabric * 0.14;
+            const paperTone = transparent ? 0 : paperTextureTone(x, y, texture, textureStrength, 121);
             const materialArea = Math.max(softA, bodyA, fuzzyEdge);
             const materialNoise = textureStrength * materialArea * (hash(x, y, 122) - 0.5) * (textureFabric * 0.82 + decorParticles * 0.12);
             const distressCell = Math.max(1, distress.size || 1);
@@ -2990,9 +3030,9 @@
               ? (hash(Math.floor(x / 2), Math.floor(y / 2), distress.seed + 151) - 0.5) * (10 + distress.amount * 1.25) * Math.max(softA, bodyA)
               : 0;
 
-            let r = transparent ? 0 : clamp(lerp(255, bgRgb.r, bgAlpha) + paperNoise + paperWeave);
-            let g = transparent ? 0 : clamp(lerp(255, bgRgb.g, bgAlpha) + paperNoise + paperWeave);
-            let b = transparent ? 0 : clamp(lerp(255, bgRgb.b, bgAlpha) + paperNoise + paperWeave);
+            let r = transparent ? 0 : clamp(lerp(255, bgRgb.r, bgAlpha) + paperTone);
+            let g = transparent ? 0 : clamp(lerp(255, bgRgb.g, bgAlpha) + paperTone);
+            let b = transparent ? 0 : clamp(lerp(255, bgRgb.b, bgAlpha) + paperTone);
 
             const haloMix = clamp((glowA - softA * 0.3) * 0.62 * hiAlpha * (0.88 + distressDrop * 0.12), 0, 0.72);
             r = transparent && haloMix > 0 ? hiRgb.r : lerp(r, hiRgb.r, haloMix);
@@ -3010,10 +3050,10 @@
             b = lerp(b, edgeRgb.b, edgeMix);
 
             const paintedArea = Math.max(haloMix, bodyMix, edgeMix);
-            const scan = textureStrength * (transparent ? paintedArea : 1) * Math.sin(y * 0.34 + hash(1, Math.floor(y / 5), 123) * 2) * textureScan * 0.12;
-            d[i] = clamp(r + materialNoise + scan + distressNoise);
-            d[i + 1] = clamp(g + materialNoise + scan + distressNoise);
-            d[i + 2] = clamp(b + materialNoise + scan + distressNoise);
+            const scanTone = transparent ? 0 : paperTextureTone(x + 173, y, texture, textureStrength * 0.34, 123) * (textureScan / 100);
+            d[i] = clamp(r + materialNoise + scanTone + distressNoise);
+            d[i + 1] = clamp(g + materialNoise + scanTone + distressNoise);
+            d[i + 2] = clamp(b + materialNoise + scanTone + distressNoise);
             d[i + 3] = transparent ? clamp(Math.max(haloMix, bodyMix, edgeMix) * alphaGate * 255) : 255;
           }
         }
@@ -3257,11 +3297,10 @@
             let a = transparent ? 0 : 255;
 
             if (color.enabled && !transparent) {
-              const fabric = texture.enabled ? texture.fabric / 100 : 0;
-              const fabricNoise = textureStrength * (hash(Math.floor(x / 7), Math.floor(y / 3), 21) - 0.5) * fabric * 44;
-              r = clamp(lerp(255, bgRgb.r, bgAlpha) + fabricNoise);
-              g = clamp(lerp(255, bgRgb.g, bgAlpha) + fabricNoise);
-              b = clamp(lerp(255, bgRgb.b, bgAlpha) + fabricNoise);
+              const fabricTone = texture.enabled ? paperTextureTone(x, y, texture, textureStrength, 21) : 0;
+              r = clamp(lerp(255, bgRgb.r, bgAlpha) + fabricTone);
+              g = clamp(lerp(255, bgRgb.g, bgAlpha) + fabricTone);
+              b = clamp(lerp(255, bgRgb.b, bgAlpha) + fabricTone);
             }
 
             if (maskStrength > 0.03 && ink.enabled) {
@@ -3284,7 +3323,7 @@
             }
 
             if (texture.enabled) {
-              const scan = transparent && maskStrength <= 0.03 ? 0 : textureStrength * Math.sin(y * 0.42 + hash(1, Math.floor(y / 3), 5) * 2) * texture.scan * 0.12;
+              const scan = transparent && maskStrength <= 0.03 ? 0 : paperTextureTone(x + 97, y, texture, textureStrength * 0.28, 5) * (texture.scan / 100);
               const bleed = texture.bleed / 100;
               if (maskStrength > 0.03 && textureStrength > 0.03 && bleed > 0) {
                 r = lerp(r, inkRgb.r, bleed * hash(x, y, 33) * 0.16 * maskStrength * textureStrength);
